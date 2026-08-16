@@ -1,8 +1,8 @@
-#  AI System Monitor (Powered by Gemini)
+#  Gemini PC Monitor
 
 An independent PC health monitor that reads real-time hardware data (CPU, RAM, disk, GPU, temperature, top processes) and sends it to **Gemini AI**, letting the model itself decide whether anything is wrong — no hardcoded thresholds involved.
 
-## What makes this different?
+##  What makes this different?
 
 Most system monitoring tools rely on **fixed thresholds** (e.g. `if disk_usage > 90: warn()`). This project intentionally does not.
 
@@ -12,7 +12,7 @@ The script only collects **raw data** (CPU %, RAM %, disk usage %, GPU status, t
 
 There is no `if % > 90` rule anywhere in the code. The model decides, using its own judgment, what counts as a critical CPU/RAM/disk level, and starts its response with either `DANGER:` or `NORMAL:`. The script reads that label and triggers a desktop notification if needed.
 
-## How it works
+##  How it works
 
 ```
 ┌──────────────────┐     ┌────────────────────┐     ┌──────────────────────┐
@@ -32,8 +32,8 @@ There is no `if % > 90` rule anywhere in the code. The model decides, using its 
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
+git clone https://github.com/edizan12/Gemini-pc-monitor.git
+cd Gemini-pc-monitor
 
 # Create a virtual environment (recommended)
 python -m venv venv
@@ -58,12 +58,12 @@ Your key is never written to disk or hardcoded anywhere in the code — it only 
 ##  Usage
 
 ```bash
-python Go.py
+python main.py
 ```
 
 Press `Ctrl+C` to stop.
 
-##  Example Output
+## Example Output
 
 ```
 === Independent AI System Monitor Started ===
@@ -85,7 +85,7 @@ are within healthy ranges.
 - [GPUtil](https://github.com/anderskm/gputil) — GPU data (NVIDIA GPUs)
 - [plyer](https://github.com/kivy/plyer) — cross-platform desktop notifications
 
-## ⚠️ Known Limitations
+##  Known Limitations
 
 - Currently built for **Windows** (disk path formatting and notification behavior are Windows-oriented).
 - `GPUtil` reliably detects only NVIDIA GPUs; integrated (Intel/AMD) GPUs may not show up.
@@ -96,7 +96,7 @@ are within healthy ranges.
 
 MIT — free to use, modify, and share.
 
-## 🤝 Contributing
+##  Contributing
 
 Pull requests are welcome, especially for:
 - macOS/Linux support
