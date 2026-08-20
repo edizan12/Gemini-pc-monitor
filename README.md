@@ -42,7 +42,7 @@ python -m venv venv
 venv\Scripts\Activate.ps1   # Windows PowerShell
 
 # Install dependencies
-pip install psutil gputil google-genai plyer
+pip install -r requirements.txt
 ```
 
 ##  API Key
