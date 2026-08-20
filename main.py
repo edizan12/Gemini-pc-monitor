@@ -2,22 +2,22 @@ import time
 import psutil
 import GPUtil
 from google import genai
+from google.genai import errors
 from plyer import notification
 
 # --- SETTINGS ---
-# The API key is never hardcoded. It is requested at runtime so anyone
-# who clones this repo can use their own free Gemini API key.
-# Get a free key at: https://aistudio.google.com/apikey
+# For your security, the API key is never hardcoded. It is requested at runtime.
+# Get a free key at: https://google.com
 GEMINI_API_KEY = input("Enter your Google AI Studio API key: ").strip()
 
 if not GEMINI_API_KEY:
     print("Error: API key cannot be empty. Exiting.")
     exit(1)
 
+# Authentic Google GenAI SDK client initiation
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# How often to check the system, in seconds.
-# Lowered for quick testing; 600 (10 minutes) is recommended for normal use.
+# How often to check the system, in seconds. (Recommended: 60 seconds or more)
 CHECK_INTERVAL_SECONDS = 5
 
 
@@ -86,11 +86,7 @@ def get_system_status():
 
 
 def run_ai_analysis(hardware_data, active_processes):
-    """Sends raw metrics to Gemini and lets the model decide, in its own
-    judgment, whether the system is at risk. No hardcoded thresholds
-    (e.g. 'if disk > 90%') are used anywhere in this function on purpose —
-    the decision is fully delegated to the model.
-    """
+    """Sends raw metrics to Gemini and processes the response using the mandatory model."""
     prompt = f"""
     You are an independent AI system agent monitoring a computer's hardware in real-time.
     Analyze the following raw system metrics and most active background processes using your own judgment:
@@ -113,24 +109,26 @@ def run_ai_analysis(hardware_data, active_processes):
     max_retries = 3
     for attempt in range(1, max_retries + 1):
         try:
+            # FIXED: Updated to 'gemini-3.6-flash' as explicitly forced by Google's API infrastructure
             response = client.models.generate_content(
-                model='gemini-flash-latest',
+                model='gemini-3.6-flash',
                 contents=prompt,
             )
             return response.text.strip()
-        except Exception as e:
-            error_text = str(e)
-            # Retry on transient errors: 503 (server overloaded) or 429 (rate limit).
-            if ("503" in error_text or "UNAVAILABLE" in error_text or "429" in error_text) and attempt < max_retries:
-                wait_time = attempt * 5  # 5s, 10s, 15s...
+        except errors.APIError as e:
+            # Catching infrastructure-specific errors (429, 503, 403, 401)
+            if e.code in [429, 503] and attempt < max_retries:
+                wait_time = attempt * 5
                 print(f"[Warning] Google servers are busy, retrying in {wait_time}s... (attempt {attempt}/{max_retries})")
                 time.sleep(wait_time)
                 continue
-            return f"GOOGLE_API_ERROR: {error_text}"
+            return f"GOOGLE_API_ERROR: {e.code} - {e.message}"
+        except Exception as e:
+            return f"UNEXPECTED_ERROR: {str(e)}"
 
 
 def send_notification(message):
-    """Sends a desktop notification to the user."""
+    """Sends a native desktop notification to the user."""
     try:
         clean_message = message.replace("DANGER:", "").strip()
         safe_message = clean_message[:60] + "..." if len(clean_message) > 60 else clean_message
@@ -152,7 +150,6 @@ def main():
         hardware_data = get_system_status()
         active_processes = get_top_resource_hogs()
 
-        # Raw data is sent as-is; the AI freely decides both content and outcome.
         ai_analysis = run_ai_analysis(hardware_data, active_processes)
 
         print(f"[Gemini Report] -> {ai_analysis}")
